@@ -50,15 +50,15 @@ void applyThemeColors() {
   if (theme_config::lightMode()) {
     kColorBackground = 0xF5F5F5;
     kColorPanel = 0xFFFFFF;
-    kColorAccent = 0xB84B00;
-    kColorSecondary = 0xF47A20;
+    kColorAccent = 0x167A45;
+    kColorSecondary = 0x176B42;
     kColorText = 0x242424;
     kColorMuted = 0x5F5F5F;
   } else {
     kColorBackground = 0x101010;
     kColorPanel = 0x242424;
-    kColorAccent = 0xFF7A1A;
-    kColorSecondary = 0xB74700;
+    kColorAccent = 0x35D07F;
+    kColorSecondary = 0x176B42;
     kColorText = 0xF5F5F5;
     kColorMuted = 0xB8B8B8;
   }
@@ -1654,9 +1654,11 @@ void showSettings() {
   loadScreen(screen);
 
   settingsStatus = lv_label_create(screen);
-  lv_obj_set_width(settingsStatus, 220);
+  lv_obj_set_width(settingsStatus, kDisplayWidth - 16);
   lv_obj_set_height(settingsStatus, 36);
   lv_label_set_long_mode(settingsStatus, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_font(settingsStatus, &lv_font_montserrat_12,
+                             LV_PART_MAIN);
   lv_obj_set_style_text_align(settingsStatus, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
   lv_obj_set_style_text_color(settingsStatus, lv_color_hex(kColorAccent), LV_PART_MAIN);
   lv_obj_align(settingsStatus, LV_ALIGN_TOP_MID, 0,

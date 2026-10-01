@@ -1,6 +1,6 @@
 # Spoolman CYD
 
-Spoolman CYD is firmware for the ESP32-2432S028 (Cheap Yellow Display) that browses SpoolmanSync printers, AMS trays, external spool slots, and spool inventory. It can assign, replace, and clear tray assignments, and supports portrait/landscape layouts, light/dark themes, and a labeled LCD color test with red/blue swap and inversion controls.
+Spoolman CYD is firmware for the ESP32-2432S028 (Cheap Yellow Display) that browses SpoolmanSync printers, AMS trays, external spool slots, and spool inventory. It can assign, replace, and clear tray assignments, and supports portrait/landscape layouts, green and charcoal light/dark themes, and a labeled LCD color test with red/blue swap and inversion controls.
 
 ## Install
 

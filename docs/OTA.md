@@ -6,7 +6,7 @@ The updater reads `ota.json` from the latest public GitHub Release for this repo
 
 The updater is available in firmware version `0.1.0` and later. The first installation must be made by USB/serial with the full-flash image because an older installed image does not contain the OTA interface. Once running an OTA-capable build, choose **Settings → Firmware Updates → Check for Updates**. If a newer release is found, press the button again to install it. The device restarts after a successful install.
 
-To test the update path from the initial OTA release, install the `v0.1.0` full-flash image, connect the device to Wi-Fi, then check for updates. Release `v0.1.1` adds the color test page and should be offered to the device.
+To test the update path from the initial OTA release, install the `v0.1.0` full-flash image, connect the device to Wi-Fi, then check for updates. Later releases should be offered to the device.
 
 The device needs Wi-Fi access to GitHub and a valid clock for HTTPS certificate checks. Credentials and the configured SpoolmanSync address are stored in NVS and are retained by an OTA update. A full serial flash can erase that configuration.
 
