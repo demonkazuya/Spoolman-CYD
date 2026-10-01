@@ -1,0 +1,88 @@
+name: Build and publish firmware release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Check version tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          version_file = Path('include/FirmwareVersion.h').read_text()
+          match = re.search(r'#define SPOOLMAN_CYD_VERSION "([0-9]+\.[0-9]+\.[0-9]+)"', version_file)
+          tag = os.environ['RELEASE_TAG']
+          if not match or tag != 'v' + match.group(1):
+              raise SystemExit(f"Release tag {tag!r} does not match firmware version {match.group(1) if match else 'missing'}")
+          PY
+
+      - name: Build firmware
+        run: pio run -e cyd
+
+      - name: Assemble full-flash image
+        run: |
+          python "$HOME/.platformio/packages/tool-esptoolpy/esptool.py" --chip esp32 merge_bin \
+            --output spoolman-cyd-${GITHUB_REF_NAME}-full.bin \
+            --flash_mode dio --flash_freq 40m --flash_size 4MB \
+            0x1000 .pio/build/cyd/bootloader.bin \
+            0x8000 .pio/build/cyd/partitions.bin \
+            0xe000 "$HOME/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin" \
+            0x10000 .pio/build/cyd/firmware.bin
+
+      - name: Prepare application image and OTA manifest
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          cp .pio/build/cyd/firmware.bin "spoolman-cyd-${RELEASE_TAG}.bin"
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          tag = os.environ['RELEASE_TAG']
+          repository = os.environ['REPOSITORY']
+          filename = f'spoolman-cyd-{tag}.bin'
+          image = Path(filename).read_bytes()
+          manifest = {
+              'version': tag[1:],
+              'firmware_url': f'https://github.com/{repository}/releases/download/{tag}/{filename}',
+              'sha256': hashlib.sha256(image).hexdigest(),
+              'size_bytes': len(image),
+          }
+          Path('ota.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          PY
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            "spoolman-cyd-${RELEASE_TAG}.bin" \
+            "spoolman-cyd-${RELEASE_TAG}-full.bin" \
+            ota.json \
+            --title "Spoolman CYD ${RELEASE_TAG}" \
+            --generate-notes

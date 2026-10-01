@@ -1,0 +1,7 @@
+.pio/
+.vscode/
+.idea/
+.DS_Store
+*.pyc
+__pycache__/
+artifacts/cyd/*.bin
