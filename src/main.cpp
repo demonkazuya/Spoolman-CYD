@@ -43,6 +43,8 @@ uint32_t kColorAccent = 0xFF7A1A;
 uint32_t kColorSecondary = 0xB74700;
 uint32_t kColorText = 0xF5F5F5;
 uint32_t kColorMuted = 0xB8B8B8;
+bool displayRedBlueSwapped = false;
+bool displayColorInverted = false;
 
 void applyThemeColors() {
   if (theme_config::lightMode()) {
@@ -145,6 +147,7 @@ void confirmUnassignEvent(lv_event_t *event);
 void backToSelectedTrays();
 void backToSpoolPicker();
 void showSettings();
+void showColorTestPage();
 void showWifiNetworksPage();
 void openSettingsEvent(lv_event_t *event);
 void showServerSettings();
@@ -371,11 +374,26 @@ void flushDisplay(lv_disp_drv_t *driver, const lv_area_t *area,
                   lv_color_t *colors) {
   const uint32_t width = static_cast<uint32_t>(area->x2 - area->x1 + 1);
   const uint32_t height = static_cast<uint32_t>(area->y2 - area->y1 + 1);
+  const uint32_t pixelCount = width * height;
 
   display.startWrite();
   display.setAddrWindow(area->x1, area->y1, width, height);
-  display.pushColors(reinterpret_cast<uint16_t *>(colors), width * height,
-                     true);
+  if (displayRedBlueSwapped) {
+    uint16_t *pixels = reinterpret_cast<uint16_t *>(colors);
+    for (uint32_t i = 0; i < pixelCount; ++i) {
+      const uint16_t color = pixels[i];
+      pixels[i] = static_cast<uint16_t>(
+          ((color & 0x001F) << 11) | (color & 0x07E0) | ((color & 0xF800) >> 11));
+    }
+    display.pushColors(pixels, pixelCount, true);
+    for (uint32_t i = 0; i < pixelCount; ++i) {
+      const uint16_t color = pixels[i];
+      pixels[i] = static_cast<uint16_t>(
+          ((color & 0x001F) << 11) | (color & 0x07E0) | ((color & 0xF800) >> 11));
+    }
+  } else {
+    display.pushColors(reinterpret_cast<uint16_t *>(colors), pixelCount, true);
+  }
   display.endWrite();
 
   lv_disp_flush_ready(driver);
@@ -1645,10 +1663,16 @@ void showSettings() {
                landscapeMode ? 39 : 54);
   updateWifiStatus();
 
+  const int settingsButtonHeight = landscapeMode ? 25 : 30;
+  const auto settingsButtonY = [](int row) {
+    return (landscapeMode ? 77 : 92) + row * (landscapeMode ? 27 : 32);
+  };
+
   settingsOrientationButton = lv_btn_create(screen);
-  lv_obj_set_size(settingsOrientationButton, 208, 30);
-  lv_obj_align(settingsOrientationButton, LV_ALIGN_TOP_MID, 0,
-               landscapeMode ? 77 : 92);
+  lv_obj_set_size(settingsOrientationButton, 208, settingsButtonHeight);
+  lv_obj_set_style_pad_all(settingsOrientationButton, landscapeMode ? 0 : 5,
+                           LV_PART_MAIN);
+  lv_obj_align(settingsOrientationButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(0));
   lv_obj_set_style_bg_color(settingsOrientationButton,
                             lv_color_hex(kColorSecondary), LV_PART_MAIN);
   lv_obj_add_event_cb(settingsOrientationButton, changeOrientationEvent,
@@ -1662,9 +1686,9 @@ void showSettings() {
   lv_obj_center(orientationLabel);
 
   scanButton = lv_btn_create(screen);
-  lv_obj_set_size(scanButton, 208, 30);
-  lv_obj_align(scanButton, LV_ALIGN_TOP_MID, 0,
-               landscapeMode ? 109 : 124);
+  lv_obj_set_size(scanButton, 208, settingsButtonHeight);
+  lv_obj_set_style_pad_all(scanButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(scanButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(1));
   lv_obj_set_style_bg_color(scanButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
   lv_obj_add_event_cb(scanButton,
                       [](lv_event_t *event) {
@@ -1676,9 +1700,10 @@ void showSettings() {
   lv_obj_center(scanLabel);
 
   settingsServerButton = lv_btn_create(screen);
-  lv_obj_set_size(settingsServerButton, 208, 30);
-  lv_obj_align(settingsServerButton, LV_ALIGN_TOP_MID, 0,
-               landscapeMode ? 141 : 156);
+  lv_obj_set_size(settingsServerButton, 208, settingsButtonHeight);
+  lv_obj_set_style_pad_all(settingsServerButton, landscapeMode ? 0 : 5,
+                           LV_PART_MAIN);
+  lv_obj_align(settingsServerButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(2));
   lv_obj_set_style_bg_color(settingsServerButton, lv_color_hex(kColorSecondary),
                             LV_PART_MAIN);
   lv_obj_add_event_cb(settingsServerButton, openServerSettingsEvent, LV_EVENT_CLICKED,
@@ -1688,9 +1713,9 @@ void showSettings() {
   lv_obj_center(serverLabel);
 
   lv_obj_t *themeButton = lv_btn_create(screen);
-  lv_obj_set_size(themeButton, 208, 30);
-  lv_obj_align(themeButton, LV_ALIGN_TOP_MID, 0,
-               landscapeMode ? 173 : 188);
+  lv_obj_set_size(themeButton, 208, settingsButtonHeight);
+  lv_obj_set_style_pad_all(themeButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(themeButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(3));
   lv_obj_set_style_bg_color(themeButton, lv_color_hex(kColorSecondary),
                             LV_PART_MAIN);
   lv_obj_add_event_cb(themeButton,
@@ -1707,9 +1732,10 @@ void showSettings() {
   lv_obj_center(themeLabel);
 
   lv_obj_t *otaSettingsButton = lv_btn_create(screen);
-  lv_obj_set_size(otaSettingsButton, 208, 30);
-  lv_obj_align(otaSettingsButton, LV_ALIGN_TOP_MID, 0,
-               landscapeMode ? 205 : 220);
+  lv_obj_set_size(otaSettingsButton, 208, settingsButtonHeight);
+  lv_obj_set_style_pad_all(otaSettingsButton, landscapeMode ? 0 : 5,
+                           LV_PART_MAIN);
+  lv_obj_align(otaSettingsButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(5));
   lv_obj_set_style_bg_color(otaSettingsButton, lv_color_hex(kColorSecondary),
                             LV_PART_MAIN);
   lv_obj_add_event_cb(otaSettingsButton,
@@ -1720,6 +1746,109 @@ void showSettings() {
   lv_obj_t *otaSettingsLabel = lv_label_create(otaSettingsButton);
   lv_label_set_text(otaSettingsLabel, "Firmware Updates");
   lv_obj_center(otaSettingsLabel);
+
+  lv_obj_t *colorTestButton = lv_btn_create(screen);
+  lv_obj_set_size(colorTestButton, 208, settingsButtonHeight);
+  lv_obj_set_style_pad_all(colorTestButton, landscapeMode ? 0 : 5,
+                           LV_PART_MAIN);
+  lv_obj_align(colorTestButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(4));
+  lv_obj_set_style_bg_color(colorTestButton, lv_color_hex(kColorSecondary),
+                            LV_PART_MAIN);
+  lv_obj_add_event_cb(colorTestButton,
+                      [](lv_event_t *event) {
+                        (void)event;
+                        showColorTestPage();
+                      }, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *colorTestLabel = lv_label_create(colorTestButton);
+  lv_label_set_text(colorTestLabel, "Color Test");
+  lv_obj_center(colorTestLabel);
+}
+
+void showColorTestPage() {
+  backHandler = showSettings;
+  lv_obj_t *screen = makeScreen();
+  addHeader(screen, "COLOR TEST", true);
+  loadScreen(screen);
+
+  struct ColorReference {
+    const char *label;
+    uint32_t rgb;
+  };
+  static const ColorReference references[] = {
+      {"RED  #FF0000", 0xFF0000},
+      {"GREEN  #00FF00", 0x00FF00},
+      {"BLUE  #0000FF", 0x0000FF},
+      {"ORANGE  #FF7A1A", 0xFF7A1A},
+      {"CYAN  #00FFFF", 0x00FFFF},
+      {"WHITE  #FFFFFF", 0xFFFFFF},
+      {"BLACK  #000000", 0x000000},
+  };
+  const int rowTop = landscapeMode ? 42 : 52;
+  const int rowStep = landscapeMode ? 19 : 27;
+  const int swatchHeight = landscapeMode ? 16 : 22;
+  const int swatchWidth = landscapeMode ? 66 : 58;
+  const int labelX = landscapeMode ? 88 : 78;
+  for (size_t i = 0; i < sizeof(references) / sizeof(references[0]); ++i) {
+    lv_obj_t *swatch = lv_obj_create(screen);
+    lv_obj_set_size(swatch, swatchWidth, swatchHeight);
+    lv_obj_align(swatch, LV_ALIGN_TOP_LEFT, 12,
+                 rowTop + static_cast<int>(i) * rowStep);
+    lv_obj_clear_flag(swatch, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_radius(swatch, 2, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(swatch, lv_color_hex(references[i].rgb),
+                              LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(swatch, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(swatch, 1, LV_PART_MAIN);
+    lv_obj_set_style_border_color(swatch, lv_color_hex(kColorMuted),
+                                  LV_PART_MAIN);
+    lv_obj_set_style_pad_all(swatch, 0, LV_PART_MAIN);
+
+    lv_obj_t *label = lv_label_create(screen);
+    lv_label_set_text(label, references[i].label);
+    lv_obj_set_style_text_color(label, lv_color_hex(kColorText), LV_PART_MAIN);
+    lv_obj_align(label, LV_ALIGN_TOP_LEFT, labelX,
+                 rowTop + static_cast<int>(i) * rowStep);
+  }
+
+  const int controlY = landscapeMode ? 178 : 246;
+  const int controlHeight = landscapeMode ? 25 : 30;
+  lv_obj_t *swapButton = lv_btn_create(screen);
+  lv_obj_set_size(swapButton, 208, controlHeight);
+  lv_obj_set_style_pad_all(swapButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(swapButton, LV_ALIGN_TOP_MID, 0, controlY);
+  lv_obj_set_style_bg_color(swapButton, lv_color_hex(kColorSecondary),
+                            LV_PART_MAIN);
+  lv_obj_add_event_cb(swapButton,
+                      [](lv_event_t *event) {
+                        (void)event;
+                        displayRedBlueSwapped = !displayRedBlueSwapped;
+                        showColorTestPage();
+                      }, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *swapLabel = lv_label_create(swapButton);
+  lv_label_set_text(swapLabel, displayRedBlueSwapped
+                                   ? "Red/Blue: Swapped"
+                                   : "Red/Blue: Normal");
+  lv_obj_center(swapLabel);
+
+  lv_obj_t *invertButton = lv_btn_create(screen);
+  lv_obj_set_size(invertButton, 208, controlHeight);
+  lv_obj_set_style_pad_all(invertButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(invertButton, LV_ALIGN_TOP_MID, 0,
+               controlY + (landscapeMode ? 29 : 34));
+  lv_obj_set_style_bg_color(invertButton, lv_color_hex(kColorSecondary),
+                            LV_PART_MAIN);
+  lv_obj_add_event_cb(invertButton,
+                      [](lv_event_t *event) {
+                        (void)event;
+                        displayColorInverted = !displayColorInverted;
+                        display.invertDisplay(displayColorInverted);
+                        showColorTestPage();
+                      }, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *invertLabel = lv_label_create(invertButton);
+  lv_label_set_text(invertLabel, displayColorInverted
+                                     ? "LCD Inversion: On"
+                                     : "LCD Inversion: Off");
+  lv_obj_center(invertLabel);
 }
 
 void showOtaPage() {
