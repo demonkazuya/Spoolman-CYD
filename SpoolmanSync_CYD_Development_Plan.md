@@ -852,7 +852,7 @@ CYD can assign a real spool to a real AMS tray.
 
 ## M9 — Unassignment
 
-Status: Firmware implementation complete; physical CYD/API verification is pending.
+Status: Implemented and physically verified. The user confirmed clearing/unassigning works on the CYD.
 
 Implement:
 
@@ -875,6 +875,8 @@ CYD can remove an assignment.
 ---
 
 ## M10 — Reliability
+
+Status: Core recovery paths have been exercised on the device: Wi-Fi reconnect after restart, incorrect Wi-Fi password timeout/error, SpoolmanSync unavailable without reboot, manual refresh after the server returns, and assignment success. The remaining API validation cases below have not all been exercised on hardware.
 
 Test:
 
@@ -899,6 +901,8 @@ Reliable LAN terminal
 
 ## M11 — UI Polish
 
+Status: Main navigation, printer refresh, theme toggle, and compact spool display are implemented. The user deferred remaining landscape text/layout polish. Physical display color order still needs visual confirmation on the user's specific panel revision.
+
 Improve:
 
 - Typography
@@ -920,14 +924,15 @@ Because the screen is only 240×320, prioritize large touch targets and readable
 
 ## M12 — OTA
 
-Add:
+Status: Implemented in firmware `0.1.0` and published as a public GitHub Release. The update page checks the latest release, validates a repository-scoped HTTPS manifest, verifies size and SHA-256, then installs to the inactive OTA slot. Physical OTA installation has not yet been tested; `0.1.0` is the initial release, so it correctly reports no update until a later version is published.
+
+Implemented:
 
 - Firmware version.
 - OTA update mechanism.
 - Version display.
-- Optional update server.
 
-This should happen after the core application is stable.
+The public GitHub release workflow publishes a full-flash image, app-only OTA image, and `ota.json` manifest. The user's installed image must be OTA-capable before it can use the updater. Keep the optional custom update server out of V1 unless requested; GitHub Releases is the configured update source.
 
 ---
 
@@ -1092,27 +1097,15 @@ Codex should treat the following as the project objective:
 
 ---
 
-# 25. Immediate Next Actions
+# 25. Current Status and Next Actions
 
-Codex should begin in this exact order:
+The project has completed the main V1 implementation and is published at `https://github.com/demonkazuya/Spoolman-CYD`. The initial OTA-capable release is `v0.1.0`. The remaining work is verification and polish rather than initial implementation:
 
-1. Identify the exact CYD hardware configuration.
-2. Review the witnessmenow CYD repository.
-3. Review the current SpoolmanSync repository/source.
-4. Determine the real API/interface used by SpoolmanSync.
-5. Document the API in `docs/API.md`.
-6. Create the project skeleton.
-7. Build a CYD LCD/touch test.
-8. Build the LVGL navigation framework.
-9. Implement Wi-Fi configuration.
-10. Implement the SpoolmanSync API client.
-11. Build printer → AMS → tray navigation.
-12. Build spool search/selection.
-13. Implement assignment.
-14. Implement unassignment.
-15. Test failure/recovery cases.
-16. Polish the UI.
-17. Add OTA only after the core system is stable.
+1. Flash `spoolman-cyd-v0.1.0-full.bin` at `0x0` and confirm first-run Wi-Fi and SpoolmanSync setup.
+2. Check physical dark/light theme colors. The driver defaults to BGR; if orange appears blue/cyan while black and white look normal, verify the panel's red/blue order before changing the driver configuration. See `docs/HARDWARE.md`.
+3. For OTA hardware verification, install `v0.1.0`, then publish a later stable version and confirm that Settings finds it, downloads it, verifies it, restarts, and reports the newer version.
+4. Continue the deferred landscape typography/layout polish.
+5. Exercise remaining reliability cases where safe, including malformed API records and invalid assignment responses.
 
 ---
 
