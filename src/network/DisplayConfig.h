@@ -4,6 +4,10 @@ namespace display_config {
 
 void begin();
 bool landscape();
-void setLandscape(bool landscape);
+bool setLandscape(bool landscape);
+bool redBlueSwapped();
+bool colorInverted();
+bool setRedBlueSwapped(bool swapped);
+bool setColorInverted(bool inverted);
 
 }  // namespace display_config

@@ -43,8 +43,6 @@ uint32_t kColorAccent = 0xFF7A1A;
 uint32_t kColorSecondary = 0xB74700;
 uint32_t kColorText = 0xF5F5F5;
 uint32_t kColorMuted = 0xB8B8B8;
-bool displayRedBlueSwapped = false;
-bool displayColorInverted = false;
 
 void applyThemeColors() {
   if (theme_config::lightMode()) {
@@ -282,7 +280,7 @@ void openSettingsEvent(lv_event_t *event) {
 
 void changeOrientationEvent(lv_event_t *event) {
   (void)event;
-  display_config::setLandscape(!landscapeMode);
+  if (!display_config::setLandscape(!landscapeMode)) return;
   Serial.printf("Display orientation changed to %s; restarting.\n",
                 landscapeMode ? "portrait" : "landscape");
   ESP.restart();
@@ -378,7 +376,7 @@ void flushDisplay(lv_disp_drv_t *driver, const lv_area_t *area,
 
   display.startWrite();
   display.setAddrWindow(area->x1, area->y1, width, height);
-  if (displayRedBlueSwapped) {
+  if (display_config::redBlueSwapped()) {
     uint16_t *pixels = reinterpret_cast<uint16_t *>(colors);
     for (uint32_t i = 0; i < pixelCount; ++i) {
       const uint16_t color = pixels[i];
@@ -1723,7 +1721,7 @@ void showSettings() {
   lv_obj_add_event_cb(themeButton,
                       [](lv_event_t *event) {
                         (void)event;
-                        theme_config::setLightMode(!theme_config::lightMode());
+                        if (!theme_config::setLightMode(!theme_config::lightMode())) return;
                         applyThemeColors();
                         showSettings();
                       }, LV_EVENT_CLICKED, nullptr);
@@ -1823,11 +1821,12 @@ void showColorTestPage() {
   lv_obj_add_event_cb(swapButton,
                       [](lv_event_t *event) {
                         (void)event;
-                        displayRedBlueSwapped = !displayRedBlueSwapped;
+                        if (!display_config::setRedBlueSwapped(
+                                !display_config::redBlueSwapped())) return;
                         showColorTestPage();
                       }, LV_EVENT_CLICKED, nullptr);
   lv_obj_t *swapLabel = lv_label_create(swapButton);
-  lv_label_set_text(swapLabel, displayRedBlueSwapped
+  lv_label_set_text(swapLabel, display_config::redBlueSwapped()
                                    ? "Red/Blue: Swapped"
                                    : "Red/Blue: Normal");
   lv_obj_center(swapLabel);
@@ -1842,12 +1841,13 @@ void showColorTestPage() {
   lv_obj_add_event_cb(invertButton,
                       [](lv_event_t *event) {
                         (void)event;
-                        displayColorInverted = !displayColorInverted;
-                        display.invertDisplay(displayColorInverted);
+                        const bool inverted = !display_config::colorInverted();
+                        if (!display_config::setColorInverted(inverted)) return;
+                        display.invertDisplay(inverted);
                         showColorTestPage();
                       }, LV_EVENT_CLICKED, nullptr);
   lv_obj_t *invertLabel = lv_label_create(invertButton);
-  lv_label_set_text(invertLabel, displayColorInverted
+  lv_label_set_text(invertLabel, display_config::colorInverted()
                                      ? "LCD Inversion: On"
                                      : "LCD Inversion: Off");
   lv_obj_center(invertLabel);
@@ -2066,6 +2066,7 @@ void setup() {
 
   display.init();
   display.setRotation(landscapeMode ? 1 : 0);
+  display.invertDisplay(display_config::colorInverted());
 
   lv_init();
   lv_disp_draw_buf_init(&drawBuffer, drawPixels, nullptr,
