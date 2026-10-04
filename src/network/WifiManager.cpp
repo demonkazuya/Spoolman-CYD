@@ -22,6 +22,7 @@ void connectSaved() {
     return;
   }
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(currentSsid.c_str(), password.c_str());
   pendingPassword = password;
   saveOnConnect = false;
@@ -34,10 +35,17 @@ void connectSaved() {
 void begin() {
   preferences.begin("spoolmansync", false);
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
   connectSaved();
 }
 
 void poll() {
+  if (currentState == State::Connected && WiFi.status() != WL_CONNECTED) {
+    currentState = State::Connecting;
+    connectionStarted = millis();
+    failureMessage = "Wi-Fi disconnected. Reconnecting...";
+    Serial.println("Wi-Fi link lost; waiting for automatic reconnection.");
+  }
   if (currentState != State::Connecting) return;
   if (WiFi.status() == WL_CONNECTED) {
     currentState = State::Connected;
@@ -73,6 +81,7 @@ bool saveCredentials(const String &ssid, const String &password) {
   saveOnConnect = true;
   failureMessage = "";
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(ssid.c_str(), password.c_str());
   connectionStarted = millis();
   currentState = State::Connecting;

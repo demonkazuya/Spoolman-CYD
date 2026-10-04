@@ -717,11 +717,12 @@ void addSpoolResultRow(lv_obj_t *list, const String &title,
                        const String &detail, size_t spoolIndex) {
   lv_obj_t *button = lv_btn_create(list);
   const int rowWidth = kDisplayWidth - 32;
-  lv_obj_set_size(button, rowWidth, landscapeMode ? 52 : 58);
+  lv_obj_set_size(button, rowWidth, landscapeMode ? 36 : 58);
   lv_obj_set_style_bg_color(button, lv_color_hex(kColorPanel), LV_PART_MAIN);
   lv_obj_set_style_border_width(button, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(button, 7, LV_PART_MAIN);
   lv_obj_set_style_pad_hor(button, 8, LV_PART_MAIN);
+  if (landscapeMode) lv_obj_set_style_pad_ver(button, 0, LV_PART_MAIN);
   lv_obj_add_event_cb(button, chooseSpoolEvent, LV_EVENT_CLICKED,
                       reinterpret_cast<void *>(static_cast<intptr_t>(spoolIndex)));
   lv_obj_t *name = lv_label_create(button);
@@ -732,13 +733,17 @@ void addSpoolResultRow(lv_obj_t *list, const String &title,
   lv_obj_set_style_text_color(name, lv_color_hex(kColorText), LV_PART_MAIN);
   lv_obj_set_style_text_font(name, &lv_font_montserrat_14, LV_PART_MAIN);
   lv_obj_align(name, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_t *details = lv_label_create(button);
-  lv_label_set_text(details, detail.c_str());
-  lv_obj_set_width(details, rowWidth - 18);
-  lv_label_set_long_mode(details, LV_LABEL_LONG_DOT);
-  lv_obj_set_style_text_color(details, lv_color_hex(kColorMuted), LV_PART_MAIN);
-  lv_obj_set_style_text_font(details, &lv_font_montserrat_14, LV_PART_MAIN);
-  lv_obj_align(details, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+  if (!detail.isEmpty()) {
+    lv_obj_t *details = lv_label_create(button);
+    lv_label_set_text(details, detail.c_str());
+    lv_obj_set_width(details, rowWidth - 18);
+    lv_label_set_long_mode(details, LV_LABEL_LONG_DOT);
+    lv_obj_set_style_text_color(details, lv_color_hex(kColorMuted), LV_PART_MAIN);
+    lv_obj_set_style_text_font(details, &lv_font_montserrat_14, LV_PART_MAIN);
+    lv_obj_align(details, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+  } else {
+    lv_obj_set_height(name, landscapeMode ? 34 : 54);
+  }
 }
 
 String spoolIdentity(const spoolman_api::SpoolSummary &spool) {
@@ -1047,7 +1052,7 @@ void renderSpoolList() {
   for (size_t pageIndex = spoolPageOffset; pageIndex < end; ++pageIndex) {
     const size_t i = matches[pageIndex];
     const auto &spool = spoolCache[i];
-    addSpoolResultRow(spoolList, spoolIdentity(spool), spoolWeight(spool), i);
+    addSpoolResultRow(spoolList, spoolIdentity(spool), "", i);
   }
   if (matches.empty()) {
     lv_obj_t *empty = lv_label_create(spoolList);
@@ -1149,11 +1154,14 @@ void showSpoolPicker(bool reload) {
                       }, LV_EVENT_FOCUSED, nullptr);
 
   materialDropdown = lv_dropdown_create(screen);
-  lv_obj_set_size(materialDropdown, landscapeMode ? 144 : 128, 28);
-  if (landscapeMode)
-    lv_obj_align(materialDropdown, LV_ALIGN_TOP_LEFT, 8, 95);
-  else
-    lv_obj_align(materialDropdown, LV_ALIGN_TOP_MID, -44, 110);
+  const int filterRowY = landscapeMode ? 95 : 112;
+  const int materialDropdownWidth = landscapeMode ? 144 : 112;
+  const int pagerButtonWidth = 44;
+  const int filterGap = 8;
+  const int previousButtonX = 8 + materialDropdownWidth + filterGap;
+  const int nextButtonX = previousButtonX + pagerButtonWidth + filterGap;
+  lv_obj_set_size(materialDropdown, materialDropdownWidth, 28);
+  lv_obj_align(materialDropdown, LV_ALIGN_TOP_LEFT, 8, filterRowY);
   lv_dropdown_set_options(materialDropdown, "All materials");
   lv_obj_add_event_cb(materialDropdown,
                       [](lv_event_t *event) {
@@ -1163,11 +1171,9 @@ void showSpoolPicker(bool reload) {
                       }, LV_EVENT_VALUE_CHANGED, nullptr);
 
   spoolPreviousButton = lv_btn_create(screen);
-  lv_obj_set_size(spoolPreviousButton, 44, 28);
-  if (landscapeMode)
-    lv_obj_align(spoolPreviousButton, LV_ALIGN_TOP_LEFT, 160, 95);
-  else
-    lv_obj_align(spoolPreviousButton, LV_ALIGN_TOP_MID, 42, 110);
+  lv_obj_set_size(spoolPreviousButton, pagerButtonWidth, 28);
+  lv_obj_align(spoolPreviousButton, LV_ALIGN_TOP_LEFT, previousButtonX,
+               filterRowY);
   lv_obj_add_event_cb(spoolPreviousButton, previousSpoolPageEvent,
                       LV_EVENT_CLICKED, nullptr);
   lv_obj_t *previousLabel = lv_label_create(spoolPreviousButton);
@@ -1176,11 +1182,8 @@ void showSpoolPicker(bool reload) {
   lv_obj_center(previousLabel);
 
   spoolNextButton = lv_btn_create(screen);
-  lv_obj_set_size(spoolNextButton, 44, 28);
-  if (landscapeMode)
-    lv_obj_align(spoolNextButton, LV_ALIGN_TOP_LEFT, 212, 95);
-  else
-    lv_obj_align(spoolNextButton, LV_ALIGN_TOP_MID, 87, 110);
+  lv_obj_set_size(spoolNextButton, pagerButtonWidth, 28);
+  lv_obj_align(spoolNextButton, LV_ALIGN_TOP_LEFT, nextButtonX, filterRowY);
   lv_obj_add_event_cb(spoolNextButton, nextSpoolPageEvent,
                       LV_EVENT_CLICKED, nullptr);
   lv_obj_t *nextLabel = lv_label_create(spoolNextButton);
@@ -2093,12 +2096,19 @@ void setup() {
 
 void loop() {
   static uint32_t previousTick = millis();
+  static bool wifiWasConnected = false;
   const uint32_t now = millis();
   lv_tick_inc(now - previousTick);
   previousTick = now;
 
   lv_timer_handler();
   cyd_wifi::poll();
+  const bool wifiConnected = cyd_wifi::connected();
+  if (wifiWasConnected && !wifiConnected && !initializingScreenActive &&
+      !setupScreenActive) {
+    showInitializing();
+  }
+  wifiWasConnected = wifiConnected;
   updateWifiStatus();
   if (initializingScreenActive) {
     if (cyd_wifi::connected()) {

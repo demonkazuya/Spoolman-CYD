@@ -104,10 +104,7 @@ bool parseVersion(String version, uint32_t parts[3]) {
   return component == 2 && digitCount > 0;
 }
 
-bool newerVersion(const String &candidate, const String &current) {
-  uint32_t next[3], active[3];
-  if (!parseVersion(candidate, next) || !parseVersion(current, active))
-    return false;
+bool isNewerVersion(const uint32_t next[3], const uint32_t active[3]) {
   for (size_t i = 0; i < 3; ++i) {
     if (next[i] != active[i]) return next[i] > active[i];
   }
@@ -184,13 +181,17 @@ bool checkForUpdate(Manifest &manifest, bool &updateAvailable, String &error) {
   manifest.firmwareUrl = document["firmware_url"] | "";
   manifest.sha256 = document["sha256"] | "";
   manifest.sizeBytes = document["size_bytes"] | 0;
-  if (manifest.version.isEmpty() || !newerVersion(manifest.version, currentVersion())) {
-    if (manifest.version.isEmpty()) {
-      error = "OTA manifest has no valid version.";
-      return false;
-    }
-    return true;
+  uint32_t manifestVersion[3];
+  uint32_t installedVersion[3];
+  if (!parseVersion(manifest.version, manifestVersion)) {
+    error = "OTA manifest has an invalid version; expected MAJOR.MINOR.PATCH.";
+    return false;
   }
+  if (!parseVersion(currentVersion(), installedVersion)) {
+    error = "Installed firmware version is invalid; cannot compare OTA versions.";
+    return false;
+  }
+  if (!isNewerVersion(manifestVersion, installedVersion)) return true;
   if (!manifest.firmwareUrl.startsWith(kFirmwareUrlPrefix)) {
     error = "OTA manifest firmware URL is outside the configured GitHub repository.";
     return false;
