@@ -151,6 +151,12 @@ void showWifiNetworksPage();
 void openSettingsEvent(lv_event_t *event);
 void showServerSettings();
 void showOtaPage();
+void showDisplaySettings();
+void showConnectivitySettings();
+void openDisplaySettingsEvent(lv_event_t *event);
+void openConnectivitySettingsEvent(lv_event_t *event);
+void showScreenTimeoutUI();
+void openScreenTimeoutEvent(lv_event_t *event);
 void testAndSaveServerEvent(lv_event_t *event);
 void changeOrientationEvent(lv_event_t *event);
 void selectAmsEvent(lv_event_t *event);
@@ -1656,117 +1662,274 @@ void showSettings() {
   addHeader(screen, "SETTINGS", true);
   loadScreen(screen);
 
+  // Device IP and Server Address (read-only, at top)
   settingsStatus = lv_label_create(screen);
   lv_obj_set_width(settingsStatus, kDisplayWidth - 16);
-  lv_obj_set_height(settingsStatus, 36);
+  lv_obj_set_height(settingsStatus, 50);
   lv_label_set_long_mode(settingsStatus, LV_LABEL_LONG_WRAP);
-  lv_obj_set_style_text_font(settingsStatus, &lv_font_montserrat_12,
-                             LV_PART_MAIN);
+  lv_obj_set_style_text_font(settingsStatus, &lv_font_montserrat_12, LV_PART_MAIN);
   lv_obj_set_style_text_align(settingsStatus, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
   lv_obj_set_style_text_color(settingsStatus, lv_color_hex(kColorAccent), LV_PART_MAIN);
-  lv_obj_align(settingsStatus, LV_ALIGN_TOP_MID, 0,
-               landscapeMode ? 39 : 54);
+  lv_obj_align(settingsStatus, LV_ALIGN_TOP_MID, 0, landscapeMode ? 39 : 54);
   updateWifiStatus();
 
   const int settingsButtonHeight = landscapeMode ? 25 : 30;
   const auto settingsButtonY = [](int row) {
-    return (landscapeMode ? 77 : 92) + row * (landscapeMode ? 27 : 32);
+    return (landscapeMode ? 110 : 130) + row * (landscapeMode ? 27 : 32);
   };
 
-  settingsOrientationButton = lv_btn_create(screen);
-  lv_obj_set_size(settingsOrientationButton, 208, settingsButtonHeight);
-  lv_obj_set_style_pad_all(settingsOrientationButton, landscapeMode ? 0 : 5,
-                           LV_PART_MAIN);
-  lv_obj_align(settingsOrientationButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(0));
-  lv_obj_set_style_bg_color(settingsOrientationButton,
-                            lv_color_hex(kColorSecondary), LV_PART_MAIN);
-  lv_obj_add_event_cb(settingsOrientationButton, changeOrientationEvent,
-                      LV_EVENT_CLICKED, nullptr);
-  lv_obj_t *orientationLabel = lv_label_create(settingsOrientationButton);
-  lv_label_set_text(orientationLabel,
-                    landscapeMode ? "Switch to Portrait"
-                                  : "Switch to Landscape");
-  lv_obj_set_style_text_font(orientationLabel, &lv_font_montserrat_14,
-                             LV_PART_MAIN);
+  // Display button
+  lv_obj_t *displayButton = lv_btn_create(screen);
+  lv_obj_set_size(displayButton, 208, settingsButtonHeight);
+  lv_obj_set_style_pad_all(displayButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(displayButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(0));
+  lv_obj_set_style_bg_color(displayButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+  lv_obj_add_event_cb(displayButton, openDisplaySettingsEvent, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *displayLabel = lv_label_create(displayButton);
+  lv_label_set_text(displayLabel, "Display");
+  lv_obj_set_style_text_font(displayLabel, &lv_font_montserrat_14, LV_PART_MAIN);
+  lv_obj_center(displayLabel);
+
+  // Connectivity button
+  lv_obj_t *connectivityButton = lv_btn_create(screen);
+  lv_obj_set_size(connectivityButton, 208, settingsButtonHeight);
+  lv_obj_set_style_pad_all(connectivityButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(connectivityButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(1));
+  lv_obj_set_style_bg_color(connectivityButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+  lv_obj_add_event_cb(connectivityButton, openConnectivitySettingsEvent, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *connectivityLabel = lv_label_create(connectivityButton);
+  lv_label_set_text(connectivityLabel, "Connectivity");
+  lv_obj_set_style_text_font(connectivityLabel, &lv_font_montserrat_14, LV_PART_MAIN);
+  lv_obj_center(connectivityLabel);
+
+  // Firmware Updates button (stays on main)
+  lv_obj_t *otaButton = lv_btn_create(screen);
+  lv_obj_set_size(otaButton, 208, settingsButtonHeight);
+  lv_obj_set_style_pad_all(otaButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(otaButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(2));
+  lv_obj_set_style_bg_color(otaButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+  lv_obj_add_event_cb(otaButton, [](lv_event_t *event) {
+    (void)event;
+    showOtaPage();
+  }, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *otaLabel = lv_label_create(otaButton);
+  lv_label_set_text(otaLabel, "Firmware Updates");
+  lv_obj_set_style_text_font(otaLabel, &lv_font_montserrat_14, LV_PART_MAIN);
+  lv_obj_center(otaLabel);
+}
+
+void showDisplaySettings() {
+  backHandler = showSettings;
+  lv_obj_t *screen = makeScreen();
+  addHeader(screen, "DISPLAY", true);
+  loadScreen(screen);
+
+  const int buttonHeight = landscapeMode ? 25 : 30;
+  const auto buttonY = [](int row) {
+    return (landscapeMode ? 52 : 62) + row * (landscapeMode ? 27 : 32);
+  };
+
+  // Portrait/Landscape toggle
+  lv_obj_t *orientationButton = lv_btn_create(screen);
+  lv_obj_set_size(orientationButton, 208, buttonHeight);
+  lv_obj_set_style_pad_all(orientationButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(orientationButton, LV_ALIGN_TOP_MID, 0, buttonY(0));
+  lv_obj_set_style_bg_color(orientationButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+  lv_obj_add_event_cb(orientationButton, changeOrientationEvent, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *orientationLabel = lv_label_create(orientationButton);
+  lv_label_set_text(orientationLabel, landscapeMode ? "Switch to Portrait" : "Switch to Landscape");
   lv_obj_center(orientationLabel);
 
-  scanButton = lv_btn_create(screen);
-  lv_obj_set_size(scanButton, 208, settingsButtonHeight);
-  lv_obj_set_style_pad_all(scanButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
-  lv_obj_align(scanButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(1));
-  lv_obj_set_style_bg_color(scanButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
-  lv_obj_add_event_cb(scanButton,
-                      [](lv_event_t *event) {
-                        (void)event;
-                        showWifiNetworksPage();
-                      }, LV_EVENT_CLICKED, nullptr);
-  lv_obj_t *scanLabel = lv_label_create(scanButton);
-  lv_label_set_text(scanLabel, "Scan Wi-Fi networks");
-  lv_obj_center(scanLabel);
-
-  settingsServerButton = lv_btn_create(screen);
-  lv_obj_set_size(settingsServerButton, 208, settingsButtonHeight);
-  lv_obj_set_style_pad_all(settingsServerButton, landscapeMode ? 0 : 5,
-                           LV_PART_MAIN);
-  lv_obj_align(settingsServerButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(2));
-  lv_obj_set_style_bg_color(settingsServerButton, lv_color_hex(kColorSecondary),
-                            LV_PART_MAIN);
-  lv_obj_add_event_cb(settingsServerButton, openServerSettingsEvent, LV_EVENT_CLICKED,
-                      nullptr);
-  lv_obj_t *serverLabel = lv_label_create(settingsServerButton);
-  lv_label_set_text(serverLabel, "SpoolmanSync Server");
-  lv_obj_center(serverLabel);
-
+  // Theme toggle
   lv_obj_t *themeButton = lv_btn_create(screen);
-  lv_obj_set_size(themeButton, 208, settingsButtonHeight);
+  lv_obj_set_size(themeButton, 208, buttonHeight);
   lv_obj_set_style_pad_all(themeButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
-  lv_obj_align(themeButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(3));
-  lv_obj_set_style_bg_color(themeButton, lv_color_hex(kColorSecondary),
-                            LV_PART_MAIN);
-  lv_obj_add_event_cb(themeButton,
-                      [](lv_event_t *event) {
-                        (void)event;
-                        if (!theme_config::setLightMode(!theme_config::lightMode())) return;
-                        applyThemeColors();
-                        showSettings();
-                      }, LV_EVENT_CLICKED, nullptr);
+  lv_obj_align(themeButton, LV_ALIGN_TOP_MID, 0, buttonY(1));
+  lv_obj_set_style_bg_color(themeButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+  lv_obj_add_event_cb(themeButton, [](lv_event_t *event) {
+    (void)event;
+    if (!theme_config::setLightMode(!theme_config::lightMode())) return;
+    applyThemeColors();
+    showDisplaySettings();
+  }, LV_EVENT_CLICKED, nullptr);
   lv_obj_t *themeLabel = lv_label_create(themeButton);
-  lv_label_set_text(themeLabel,
-                    theme_config::lightMode() ? "Theme: Light"
-                                              : "Theme: Dark");
+  lv_label_set_text(themeLabel, theme_config::lightMode() ? "Theme: Light" : "Theme: Dark");
   lv_obj_center(themeLabel);
 
-  lv_obj_t *otaSettingsButton = lv_btn_create(screen);
-  lv_obj_set_size(otaSettingsButton, 208, settingsButtonHeight);
-  lv_obj_set_style_pad_all(otaSettingsButton, landscapeMode ? 0 : 5,
-                           LV_PART_MAIN);
-  lv_obj_align(otaSettingsButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(5));
-  lv_obj_set_style_bg_color(otaSettingsButton, lv_color_hex(kColorSecondary),
-                            LV_PART_MAIN);
-  lv_obj_add_event_cb(otaSettingsButton,
-                      [](lv_event_t *event) {
-                        (void)event;
-                        showOtaPage();
-                      }, LV_EVENT_CLICKED, nullptr);
-  lv_obj_t *otaSettingsLabel = lv_label_create(otaSettingsButton);
-  lv_label_set_text(otaSettingsLabel, "Firmware Updates");
-  lv_obj_center(otaSettingsLabel);
-
+  // Color Test button
   lv_obj_t *colorTestButton = lv_btn_create(screen);
-  lv_obj_set_size(colorTestButton, 208, settingsButtonHeight);
-  lv_obj_set_style_pad_all(colorTestButton, landscapeMode ? 0 : 5,
-                           LV_PART_MAIN);
-  lv_obj_align(colorTestButton, LV_ALIGN_TOP_MID, 0, settingsButtonY(4));
-  lv_obj_set_style_bg_color(colorTestButton, lv_color_hex(kColorSecondary),
-                            LV_PART_MAIN);
-  lv_obj_add_event_cb(colorTestButton,
-                      [](lv_event_t *event) {
-                        (void)event;
-                        showColorTestPage();
-                      }, LV_EVENT_CLICKED, nullptr);
+  lv_obj_set_size(colorTestButton, 208, buttonHeight);
+  lv_obj_set_style_pad_all(colorTestButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(colorTestButton, LV_ALIGN_TOP_MID, 0, buttonY(2));
+  lv_obj_set_style_bg_color(colorTestButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+  lv_obj_add_event_cb(colorTestButton, [](lv_event_t *event) {
+    (void)event;
+    showColorTestPage();
+  }, LV_EVENT_CLICKED, nullptr);
   lv_obj_t *colorTestLabel = lv_label_create(colorTestButton);
   lv_label_set_text(colorTestLabel, "Color Test");
   lv_obj_center(colorTestLabel);
+
+  // Screen Timeout button
+  lv_obj_t *timeoutButton = lv_btn_create(screen);
+  lv_obj_set_size(timeoutButton, 208, buttonHeight);
+  lv_obj_set_style_pad_all(timeoutButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(timeoutButton, LV_ALIGN_TOP_MID, 0, buttonY(3));
+  lv_obj_set_style_bg_color(timeoutButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+  lv_obj_add_event_cb(timeoutButton, openScreenTimeoutEvent, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *timeoutLabel = lv_label_create(timeoutButton);
+  uint16_t timeout = display_settings::screenTimeoutMinutes();
+  lv_label_set_text_fmt(timeoutLabel, "Screen Timeout: %u min", timeout == 0 ? 999 : timeout);
+  lv_obj_center(timeoutLabel);
+}
+
+void showConnectivitySettings() {
+  backHandler = showSettings;
+  lv_obj_t *screen = makeScreen();
+  addHeader(screen, "CONNECTIVITY", true);
+  loadScreen(screen);
+
+  const int buttonHeight = landscapeMode ? 25 : 30;
+  const auto buttonY = [](int row) {
+    return (landscapeMode ? 77 : 92) + row * (landscapeMode ? 27 : 32);
+  };
+
+  // Scan Wi-Fi Networks
+  scanButton = lv_btn_create(screen);
+  lv_obj_set_size(scanButton, 208, buttonHeight);
+  lv_obj_set_style_pad_all(scanButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(scanButton, LV_ALIGN_TOP_MID, 0, buttonY(0));
+  lv_obj_set_style_bg_color(scanButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+  lv_obj_add_event_cb(scanButton, [](lv_event_t *event) {
+    (void)event;
+    showWifiNetworksPage();
+  }, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *scanLabel = lv_label_create(scanButton);
+  lv_label_set_text(scanLabel, "Scan Wi-Fi Networks");
+  lv_obj_center(scanLabel);
+
+  // SpoolmanSync Server
+  settingsServerButton = lv_btn_create(screen);
+  lv_obj_set_size(settingsServerButton, 208, buttonHeight);
+  lv_obj_set_style_pad_all(settingsServerButton, landscapeMode ? 0 : 5, LV_PART_MAIN);
+  lv_obj_align(settingsServerButton, LV_ALIGN_TOP_MID, 0, buttonY(1));
+  lv_obj_set_style_bg_color(settingsServerButton, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+  lv_obj_add_event_cb(settingsServerButton, openServerSettingsEvent, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *serverLabel = lv_label_create(settingsServerButton);
+  lv_label_set_text(serverLabel, "SpoolmanSync Server");
+  lv_obj_center(serverLabel);
+}
+
+void openDisplaySettingsEvent(lv_event_t *event) {
+  (void)event;
+  showDisplaySettings();
+}
+
+void openConnectivitySettingsEvent(lv_event_t *event) {
+  (void)event;
+  showConnectivitySettings();
+}
+
+void openScreenTimeoutEvent(lv_event_t *event) {
+  (void)event;
+  showScreenTimeoutUI();
+}
+
+void showScreenTimeoutUI() {
+  backHandler = showDisplaySettings;
+  lv_obj_t *screen = makeScreen();
+  addHeader(screen, "SCREEN TIMEOUT", true);
+  loadScreen(screen);
+
+  uint16_t currentTimeout = display_settings::screenTimeoutMinutes();
+  const int buttonHeight = landscapeMode ? 24 : 28;
+  const auto buttonY = [](int row) {
+    return (landscapeMode ? 52 : 62) + row * (landscapeMode ? 26 : 31);
+  };
+
+  // Display current timeout
+  lv_obj_t *timeoutDisplay = lv_label_create(screen);
+  lv_obj_set_width(timeoutDisplay, kDisplayWidth - 16);
+  lv_label_set_long_mode(timeoutDisplay, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_color(timeoutDisplay, lv_color_hex(kColorAccent), LV_PART_MAIN);
+  lv_obj_set_style_text_align(timeoutDisplay, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+  lv_label_set_text_fmt(timeoutDisplay, "Current: %u minutes", currentTimeout == 0 ? 999 : currentTimeout);
+  lv_obj_align(timeoutDisplay, LV_ALIGN_TOP_MID, 0, landscapeMode ? 39 : 49);
+
+  // Preset buttons: 1 min, 5 min, 10 min, Never
+  const struct { uint16_t value; const char *label; } presets[] = {
+    {1, "1 Min"},
+    {5, "5 Min"},
+    {10, "10 Min"},
+    {0, "Never"}
+  };
+
+  // Create a container for the preset buttons
+  lv_obj_t *presetContainer = lv_obj_create(screen);
+  lv_obj_set_size(presetContainer, 208, 70);
+  lv_obj_align(presetContainer, LV_ALIGN_TOP_MID, 0, buttonY(0));
+  lv_obj_set_style_bg_opa(presetContainer, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_border_width(presetContainer, 0, LV_PART_MAIN);
+  lv_obj_set_style_pad_all(presetContainer, 0, LV_PART_MAIN);
+  lv_obj_set_flex_flow(presetContainer, LV_FLEX_FLOW_ROW_WRAP);
+  lv_obj_set_flex_align(presetContainer, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+  for (size_t i = 0; i < 4; i++) {
+    lv_obj_t *btn = lv_btn_create(presetContainer);
+    lv_obj_set_size(btn, 90, buttonHeight);
+    lv_obj_set_style_pad_all(btn, 2, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(btn, lv_color_hex(kColorSecondary), LV_PART_MAIN);
+    
+    lv_obj_add_event_cb(btn, [](lv_event_t *event) {
+      uint16_t val = (uintptr_t)event->user_data;
+      display_settings::setScreenTimeoutMinutes(val);
+      showDisplaySettings();
+    }, LV_EVENT_CLICKED, (void *)presets[i].value);
+    
+    lv_obj_t *label = lv_label_create(btn);
+    lv_label_set_text(label, presets[i].label);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_12, LV_PART_MAIN);
+    lv_obj_center(label);
+  }
+
+  // Custom input field and keypad
+  lv_obj_t *customLabel = lv_label_create(screen);
+  lv_label_set_text(customLabel, "Custom (1-999):");
+  lv_obj_set_style_text_color(customLabel, lv_color_hex(kColorText), LV_PART_MAIN);
+  lv_obj_align(customLabel, LV_ALIGN_TOP_MID, 0, buttonY(0) + 40);
+
+  static lv_obj_t *customInput = nullptr;
+  customInput = lv_textarea_create(screen);
+  lv_obj_set_size(customInput, 140, 32);
+  lv_textarea_set_one_line(customInput, true);
+  lv_textarea_set_accepted_chars(customInput, "0123456789");
+  lv_obj_align(customInput, LV_ALIGN_TOP_MID, 0, buttonY(0) + 60);
+  lv_textarea_set_placeholder_text(customInput, "minutes");
+
+  lv_obj_t *saveButton = lv_btn_create(screen);
+  lv_obj_set_size(saveButton, 140, buttonHeight);
+  lv_obj_set_style_bg_color(saveButton, lv_color_hex(kColorAccent), LV_PART_MAIN);
+  lv_obj_align(saveButton, LV_ALIGN_TOP_MID, 0, buttonY(0) + 100);
+  lv_obj_add_event_cb(saveButton, [](lv_event_t *event) {
+    (void)event;
+    const char *text = lv_textarea_get_text(customInput);
+    if (text && strlen(text) > 0) {
+      uint16_t val = atoi(text);
+      if (val == 0 || val > 999) val = 5;
+      display_settings::setScreenTimeoutMinutes(val);
+    }
+    showDisplaySettings();
+  }, LV_EVENT_CLICKED, nullptr);
+  lv_obj_t *saveLabel = lv_label_create(saveButton);
+  lv_label_set_text(saveLabel, "Save");
+  lv_obj_center(saveLabel);
+
+  static lv_obj_t *customKeyboard = nullptr;
+  customKeyboard = lv_keyboard_create(screen);
+  lv_obj_set_size(customKeyboard, kDisplayWidth, landscapeMode ? 75 : 90);
+  lv_obj_align(customKeyboard, LV_ALIGN_BOTTOM_MID, 0, 0);
+  lv_keyboard_set_mode(customKeyboard, LV_KEYBOARD_MODE_NUMBER);
+  lv_keyboard_set_textarea(customKeyboard, customInput);
 }
 
 void showColorTestPage() {
