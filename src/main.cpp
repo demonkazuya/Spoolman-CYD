@@ -12,6 +12,7 @@
 #include "network/WifiManager.h"
 #include "network/ServerConfig.h"
 #include "network/DisplayConfig.h"
+#include "DisplaySettings.h"
 #include "ThemeConfig.h"
 #include "FirmwareVersion.h"
 #include "OtaUpdater.h"
@@ -408,6 +409,7 @@ void readTouch(lv_indev_drv_t *driver, lv_indev_data_t *data) {
   (void)driver;
 
   if (touch.touched()) {
+    display_settings::updateActivity();
     const TS_Point point = touch.getPoint();
     data->state = LV_INDEV_STATE_PR;
     data->point.x = mapTouchAxis(point.x, cyd_config::kTouchRawXMin,
@@ -2062,6 +2064,7 @@ void setup() {
   cyd_wifi::begin();
   pinMode(kBacklight, OUTPUT);
   digitalWrite(kBacklight, HIGH);
+  display_settings::begin();
 
   touchSpi.begin(kTouchClock, kTouchMiso, kTouchMosi, kTouchCs);
   touch.begin(touchSpi);
@@ -2103,6 +2106,7 @@ void loop() {
 
   lv_timer_handler();
   cyd_wifi::poll();
+  display_settings::poll();
   const bool wifiConnected = cyd_wifi::connected();
   if (wifiWasConnected && !wifiConnected && !initializingScreenActive &&
       !setupScreenActive) {
