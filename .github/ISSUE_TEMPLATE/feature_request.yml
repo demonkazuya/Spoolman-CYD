@@ -1,0 +1,36 @@
+name: "💡 Feature Request"
+description: Suggest an idea or feature for Spoolman CYD
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature! Please provide as much detail as possible about what you'd like to see.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear and concise description of the problem or limitation (e.g., "I'm always frustrated when...").
+      placeholder: "Describe the limitation..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Describe the Solution You'd Like
+      description: A clear and concise description of what you want to happen.
+      placeholder: "I would like Spoolman CYD to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions or Context
+      description: Any alternative solutions or features you've considered, mockups, or screenshots.
+      placeholder: "Any additional context..."
+    validations:
+      required: false

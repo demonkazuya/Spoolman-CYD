@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "Spoolman CYD Releases"
+    url: "https://github.com/demonkazuya/Spoolman-CYD/releases"
+    about: "Download pre-built firmware binaries and check release notes"
+  - name: "Hardware & flashing documentation"
+    url: "https://github.com/demonkazuya/Spoolman-CYD#install"
+    about: "CYD pinouts, display settings, and first-time USB flashing steps"

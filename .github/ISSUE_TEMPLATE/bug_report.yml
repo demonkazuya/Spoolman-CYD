@@ -1,0 +1,154 @@
+name: "🐛 Bug Report"
+description: Report a bug or issue with Spoolman CYD
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please fill out the form below as completely as possible to help us reproduce and fix it quickly.
+
+        **Before you submit:** Verify that SpoolmanSync is running and reachable from your browser on the same local network. See the [README](https://github.com/demonkazuya/Spoolman-CYD#install) for hardware and setup details.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description of the Issue
+      description: A clear and concise description of what the problem is.
+      placeholder: "Explain what is happening..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions on how to replicate the issue.
+      placeholder: |
+        1. Power on the device
+        2. Navigate to '...'
+        3. Tap on '...'
+        4. Observe error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: Expected vs Actual Behavior
+      description: What did you expect to happen, and what happened instead?
+      placeholder: "Expected: ...\nActual: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_were_you_doing
+    attributes:
+      label: What were you trying to do when this happened?
+      description: For example, initial Wi-Fi setup, connecting to SpoolmanSync server, assigning a spool, or changing orientation/theme.
+      placeholder: "e.g., I was assigning a spool to tray 2 and the screen froze..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: hardware_model
+    attributes:
+      label: CYD / ESP32 Hardware Model
+      description: Which display board are you using?
+      options:
+        - "ESP32-2432S028R (2.8\" Resistive Touch - Standard CYD)"
+        - "ESP32-2432S028C (2.8\" Capacitive Touch)"
+        - "ESP32-3248S035 (3.5\" Display)"
+        - "Other / Custom Hardware"
+    validations:
+      required: true
+
+  - type: input
+    id: firmware_version
+    attributes:
+      label: Firmware Version
+      description: Version installed on the device (shown in Settings or release binary name).
+      placeholder: "e.g., v0.1.6"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: display_orientation
+    attributes:
+      label: Display Orientation
+      description: Current display orientation configured on the device.
+      options:
+        - "Landscape"
+        - "Portrait"
+        - "Boot loop / Cannot reach settings"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Display Theme
+      options:
+        - "Charcoal Dark"
+        - "Charcoal Light"
+        - "Green Dark"
+        - "Green Light"
+        - "Default"
+    validations:
+      required: false
+
+  - type: input
+    id: spoolman_sync_version
+    attributes:
+      label: Spoolman Sync Version
+      description: Version of the Spoolman Sync service running on your network.
+      placeholder: "e.g., v0.3.0"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: network_status
+    attributes:
+      label: Network Connectivity
+      description: Can the device connect to Wi-Fi and reach the SpoolmanSync API?
+      options:
+        - "Wi-Fi connected and SpoolmanSync reachable from browser"
+        - "Wi-Fi connected but SpoolmanSync API unreachable from CYD"
+        - "Cannot connect to Wi-Fi"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: serial_logs
+    attributes:
+      label: Serial Console Logs (115200 baud)
+      description: Connect the CYD via USB and paste serial monitor logs. Please redact private Wi-Fi passwords and sensitive keys.
+      render: shell
+      placeholder: |
+        [BOOT] Starting Spoolman CYD...
+        [WIFI] Connecting to SSID...
+        [API] GET /api/v1/...
+    validations:
+      required: false
+
+  - type: textarea
+    id: visual_evidence
+    attributes:
+      label: Screenshots / Photos
+      description: Drag and drop photos of the device screen or browser error.
+      placeholder: "Attach images here..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-Submission Checklist
+      options:
+        - label: "I verified the device has adequate 5V power (not an underpowered USB hub port)."
+          required: false
+        - label: "I confirmed that the SpoolmanSync server address and port are reachable from a browser on the same network."
+          required: false
+        - label: "I checked existing GitHub issues to make sure this is not a duplicate."
+          required: true

@@ -1,0 +1,47 @@
+name: "❓ Support / Question"
+description: Ask for help getting Spoolman CYD flashed, configured, or connected
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for asking! Please check the [README](https://github.com/demonkazuya/Spoolman-CYD#install) and [Hardware Notes](https://github.com/demonkazuya/Spoolman-CYD/blob/main/docs/HARDWARE.md) first. Many setup, flashing, and display calibration questions are answered there.
+
+  - type: textarea
+    id: what_trying_to_do
+    attributes:
+      label: What are you trying to do?
+      description: Describe what you are configuring or trying to achieve.
+      placeholder: "e.g., I am trying to flash the full binary to an ESP32-2432S028R display..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_tried
+    attributes:
+      label: What have you tried so far?
+      description: Steps you've already taken, and what happened.
+      placeholder: "e.g., Flashed via esptool at 0x0, device boots to Wi-Fi screen, but cannot connect..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: hardware_model
+    attributes:
+      label: CYD / ESP32 Hardware Model
+      options:
+        - "ESP32-2432S028R (2.8\" Resistive Touch - Standard CYD)"
+        - "ESP32-2432S028C (2.8\" Capacitive Touch)"
+        - "ESP32-3248S035 (3.5\" Display)"
+        - "Other / Custom Hardware"
+    validations:
+      required: false
+
+  - type: input
+    id: firmware_version
+    attributes:
+      label: Firmware Version
+      placeholder: "e.g., v0.1.6"
+    validations:
+      required: false
