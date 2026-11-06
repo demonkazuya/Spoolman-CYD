@@ -21,3 +21,14 @@ pio run -e cyd
 ```
 
 The application image is `.pio/build/cyd/firmware.bin`. See [OTA updates](docs/OTA.md) for release publishing and image formats. See [hardware notes](docs/HARDWARE.md) for board and display configuration, and [API notes](docs/API.md) for the verified SpoolmanSync routes.
+
+---
+
+## ☕ Support the Project
+
+If Spoolman CYD saved you from pulling out your phone and scanning QR codes just to swap a spool, thank you for supporting the project!
+
+If you're happy with the firmware and feeling generous, you can tip me a coffee. Every coffee helps fuel more CYD hardware projects and keeps the 3D printing tinker spirit alive:
+
+[![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-Tip%20a%20Coffee-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/demonkazuya)
+
