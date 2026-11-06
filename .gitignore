@@ -5,3 +5,6 @@
 *.pyc
 __pycache__/
 artifacts/cyd/*.bin
+.agents/
+.aws/
+.codex/
